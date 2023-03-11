@@ -7,17 +7,23 @@
 #include <iostream>
 #include <map>
 
+#define debug_level 0
 std::string yearstr(int year) {
   return year==-1? "Unknown": std::to_string(year);
 }
 
-int main()
+int main(int argc, char **argv)
 {
+  bool download_mode =false;
+  if (argc == 2) {
+    std::string arg1 = argv[1];
+    download_mode = arg1=="--download";
+  }
   char filename[64];
   snprintf(filename, sizeof filename, "out.csv");
   std::ofstream out_file1;
   out_file1.open(filename);
-  out_file1<<"id, Caption/title, production start year, end year, Description, Source, image_filename, collection name, museum name, linceses\n";
+  out_file1<<"id, Caption/title, production start year, end year, Description, Source, image_filename, subjects, date published, collection name, museum name, exif_model, exif_iso, exif_focallength, exif_exposuretime, exif_aperture,  exif_datetimeoriginal, liceses\n";
   for (auto i = 0; i<4; i++) {
     char in_file_i[64];
     snprintf(in_file_i, sizeof in_file_i, "data_%d.json", i);
@@ -54,7 +60,6 @@ int main()
       const rapidjson::Value& response = doc["response"];
       if (response.HasMember("docs")
           && response["docs"].IsArray()) {
-        std::cout<<"yes, response is an array"<<std::endl;
         for (rapidjson::SizeType i = 0; i < response["docs"].Size(); i++) {
           //std::cout<<i<<std::endl;
           int yearb = -1, yeare = -1;
@@ -126,6 +131,26 @@ int main()
           }
         }
 
+        std::string subjects;
+        if (article.HasMember("artifact.ingress.subjects")) {
+          const rapidjson::Value& subjv = article["artifact.ingress.subjects"];
+          if (subjv.IsArray()) {
+            for (auto i = 0; i<subjv.GetArray().Size(); i++) {
+              subjects += subjv[i].GetString();
+            }
+            std::replace( description.begin(), description.end(), ',', ':'); 
+            std::replace( description.begin(), description.end(), '\n', ' ');
+          }
+        }
+
+        std::string publishdate;
+        if (article.HasMember("artifact.publishedDate")) {
+          const rapidjson::Value& pubdatev = article["artifact.publishedDate"];
+          if (pubdatev.IsString()) {
+            publishdate = pubdatev.GetString();
+          }
+        }
+
         std::string license = "";
         if (article.HasMember("artifact.ingress.license")) {
           if (article[ "artifact.ingress.license"].IsString())
@@ -142,11 +167,64 @@ int main()
           is_cc_license = true;
           char imgfetch[256];
           snprintf(imgfetch, sizeof imgfetch, "wget %s -O \"%s-%s.jpeg\"", imglink, article_id.c_str(), mediaid.c_str());
-          std::cout<<imgfetch<<std::endl;
-          //          system (imgfetch);
-          std::cout<<"Found CC by license, fetched the image for "<< mediaid<<"\n";
+          if (debug_level > 0) std::cout<<imgfetch<<std::endl;
+          if (download_mode) {
+            std::cout<<"running in download mode\n";
+            system (imgfetch);
+            if (debug_level >0) std::cout<<"Found CC by license, fetched the image for "<< mediaid<<"\n";
+          }
         }
+
         if (is_cc_license) {
+          char exif_file[128];
+          snprintf(exif_file, sizeof exif_file, "%s-%s.jpeg.exif.json", article_id.c_str(), mediaid.c_str());
+          // Open the file
+          FILE* exiffp = fopen(exif_file, "rb");
+          if (!exiffp) {
+            std::cerr << "Error: unable to open file" << std::string(exif_file)
+                      << std::endl;
+            return -1;
+          }
+        
+
+          char exifreadBuffer[4096];
+          rapidjson::FileReadStream exifis(exiffp, exifreadBuffer, sizeof(exifreadBuffer));
+          rapidjson::Document exifdoc;
+          exifdoc.ParseStream(exifis);
+
+          // Check if the document is valid
+          if (exifdoc.HasParseError()) {
+            std::cerr << "Error: failed to parse JSON document exif data"
+                      << std::endl;
+          }
+          fclose(exiffp);
+        
+          std::string exif_model, exif_iso, exif_focallength, exif_exposuretime, exif_aperture, exif_fnumber, exif_datetimeoriginal;
+          if (exifdoc.IsArray()) {
+            if (exifdoc[0].IsObject()) {
+              if (exifdoc[0].GetObject().HasMember("Model")) {
+                exif_model = exifdoc[0].GetObject()["Model"].GetString();
+              }
+              if (exifdoc[0].GetObject().HasMember("ISO")) {
+                exif_iso = std::to_string(exifdoc[0].GetObject()["ISO"].GetInt());
+              }
+              if (exifdoc[0].GetObject().HasMember("FocalLength")) {
+                exif_focallength = exifdoc[0].GetObject()["FocalLength"].GetString();
+              }
+              if (exifdoc[0].GetObject().HasMember("ExposureTime")) {
+                if (exifdoc[0].GetObject()["ExposureTime"].IsString())
+                  exif_exposuretime = exifdoc[0].GetObject()["ExposureTime"].GetString();
+              }
+              if (exifdoc[0].GetObject().HasMember("ApertureValue")) {
+                exif_aperture = std::to_string(exifdoc[0].GetObject()["ApertureValue"].GetDouble());
+              }
+              if (exifdoc[0].GetObject().HasMember("DateTimeOriginal")) {
+                exif_datetimeoriginal = exifdoc[0].GetObject()["DateTimeOriginal"].GetString();
+              }
+            }
+          }
+
+
         out_file1<<
           /*  article["artifact.defaultMediaIdentifier"].GetString()<<
               ", "<< article["artifact.defaultPictureIndex"].GetInt()<<
@@ -156,11 +234,19 @@ int main()
           ", "<< title <<
           ", "<< yearstr(yearb) <<
           ", "<< yearstr(yeare) <<
-          ", "<< descfilename <<
+          ", "<< description <<
           ", "<< imglink <<
           ", "<< article_id+"-"+ mediaid +".jpeg" <<
+          ", "<< subjects <<
+          ", "<< publishdate <<
           ", "<<"Länge leve Kosta! exhibition" <<
           ", "<<"Kulturparken Småland / Smålands museum" <<
+          ", "<< exif_model <<
+          ", "<< exif_iso <<
+          ", "<< exif_focallength <<
+          ", "<< exif_exposuretime <<
+          ", "<< exif_aperture <<
+          ", "<< exif_datetimeoriginal<<
           ", "<< license <<
           std::endl;
         }

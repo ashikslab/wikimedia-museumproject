@@ -1,0 +1,5 @@
+for f in "$1"/*.jpeg
+ do
+    exiftool -j "`echo $f`" > "`echo $f`.exif.json"
+ done
+exit
