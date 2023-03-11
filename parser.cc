@@ -137,6 +137,7 @@ int main(int argc, char **argv)
           if (subjv.IsArray()) {
             for (auto i = 0; i<subjv.GetArray().Size(); i++) {
               subjects += subjv[i].GetString();
+              subjects += " ";
             }
             std::replace( description.begin(), description.end(), ',', ':'); 
             std::replace( description.begin(), description.end(), '\n', ' ');
@@ -175,80 +176,82 @@ int main(int argc, char **argv)
           }
         }
 
-        if (is_cc_license) {
-          char exif_file[128];
-          snprintf(exif_file, sizeof exif_file, "%s-%s.jpeg.exif.json", article_id.c_str(), mediaid.c_str());
-          // Open the file
-          FILE* exiffp = fopen(exif_file, "rb");
-          if (!exiffp) {
-            std::cerr << "Error: unable to open file" << std::string(exif_file)
-                      << std::endl;
-            return -1;
-          }
+        if (!download_mode) {
+          if (is_cc_license) {
+            char exif_file[128];
+            snprintf(exif_file, sizeof exif_file, "%s-%s.jpeg.exif.json", article_id.c_str(), mediaid.c_str());
+            // Open the file
+            FILE* exiffp = fopen(exif_file, "rb");
+            if (!exiffp) {
+              std::cerr << "Error: unable to open file" << std::string(exif_file)
+                        << std::endl;
+              return -1;
+            }
         
 
-          char exifreadBuffer[4096];
-          rapidjson::FileReadStream exifis(exiffp, exifreadBuffer, sizeof(exifreadBuffer));
-          rapidjson::Document exifdoc;
-          exifdoc.ParseStream(exifis);
+            char exifreadBuffer[4096];
+            rapidjson::FileReadStream exifis(exiffp, exifreadBuffer, sizeof(exifreadBuffer));
+            rapidjson::Document exifdoc;
+            exifdoc.ParseStream(exifis);
 
-          // Check if the document is valid
-          if (exifdoc.HasParseError()) {
-            std::cerr << "Error: failed to parse JSON document exif data"
-                      << std::endl;
-          }
-          fclose(exiffp);
+            // Check if the document is valid
+            if (exifdoc.HasParseError()) {
+              std::cerr << "Error: failed to parse JSON document exif data"
+                        << std::endl;
+            }
+            fclose(exiffp);
         
-          std::string exif_model, exif_iso, exif_focallength, exif_exposuretime, exif_aperture, exif_fnumber, exif_datetimeoriginal;
-          if (exifdoc.IsArray()) {
-            if (exifdoc[0].IsObject()) {
-              if (exifdoc[0].GetObject().HasMember("Model")) {
-                exif_model = exifdoc[0].GetObject()["Model"].GetString();
-              }
-              if (exifdoc[0].GetObject().HasMember("ISO")) {
-                exif_iso = std::to_string(exifdoc[0].GetObject()["ISO"].GetInt());
-              }
-              if (exifdoc[0].GetObject().HasMember("FocalLength")) {
-                exif_focallength = exifdoc[0].GetObject()["FocalLength"].GetString();
-              }
-              if (exifdoc[0].GetObject().HasMember("ExposureTime")) {
-                if (exifdoc[0].GetObject()["ExposureTime"].IsString())
-                  exif_exposuretime = exifdoc[0].GetObject()["ExposureTime"].GetString();
-              }
-              if (exifdoc[0].GetObject().HasMember("ApertureValue")) {
-                exif_aperture = std::to_string(exifdoc[0].GetObject()["ApertureValue"].GetDouble());
-              }
-              if (exifdoc[0].GetObject().HasMember("DateTimeOriginal")) {
-                exif_datetimeoriginal = exifdoc[0].GetObject()["DateTimeOriginal"].GetString();
+            std::string exif_model, exif_iso, exif_focallength, exif_exposuretime, exif_aperture, exif_fnumber, exif_datetimeoriginal;
+            if (exifdoc.IsArray()) {
+              if (exifdoc[0].IsObject()) {
+                if (exifdoc[0].GetObject().HasMember("Model")) {
+                  exif_model = exifdoc[0].GetObject()["Model"].GetString();
+                }
+                if (exifdoc[0].GetObject().HasMember("ISO")) {
+                  exif_iso = std::to_string(exifdoc[0].GetObject()["ISO"].GetInt());
+                }
+                if (exifdoc[0].GetObject().HasMember("FocalLength")) {
+                  exif_focallength = exifdoc[0].GetObject()["FocalLength"].GetString();
+                }
+                if (exifdoc[0].GetObject().HasMember("ExposureTime")) {
+                  if (exifdoc[0].GetObject()["ExposureTime"].IsString())
+                    exif_exposuretime = exifdoc[0].GetObject()["ExposureTime"].GetString();
+                }
+                if (exifdoc[0].GetObject().HasMember("ApertureValue")) {
+                  exif_aperture = std::to_string(exifdoc[0].GetObject()["ApertureValue"].GetDouble());
+                }
+                if (exifdoc[0].GetObject().HasMember("DateTimeOriginal")) {
+                  exif_datetimeoriginal = exifdoc[0].GetObject()["DateTimeOriginal"].GetString();
+                }
               }
             }
+
+
+            out_file1<<
+              /*  article["artifact.defaultMediaIdentifier"].GetString()<<
+                  ", "<< article["artifact.defaultPictureIndex"].GetInt()<<
+                  ", "<< article["artifact.defaultPictureDimension"].GetString()<<
+                  ", "<<*/
+              article_id <<
+              ", "<< title <<
+              ", "<< yearstr(yearb) <<
+              ", "<< yearstr(yeare) <<
+              ", "<< description <<
+              ", "<< imglink <<
+              ", "<< article_id+"-"+ mediaid +".jpeg" <<
+              ", "<< subjects <<
+              ", "<< publishdate <<
+              ", "<<"Länge leve Kosta! exhibition" <<
+              ", "<<"Kulturparken Småland / Smålands museum" <<
+              ", "<< exif_model <<
+              ", "<< exif_iso <<
+              ", "<< exif_focallength <<
+              ", "<< exif_exposuretime <<
+              ", "<< exif_aperture <<
+              ", "<< exif_datetimeoriginal<<
+              ", "<< license <<
+              std::endl;
           }
-
-
-        out_file1<<
-          /*  article["artifact.defaultMediaIdentifier"].GetString()<<
-              ", "<< article["artifact.defaultPictureIndex"].GetInt()<<
-              ", "<< article["artifact.defaultPictureDimension"].GetString()<<
-              ", "<<*/
-          article_id <<
-          ", "<< title <<
-          ", "<< yearstr(yearb) <<
-          ", "<< yearstr(yeare) <<
-          ", "<< description <<
-          ", "<< imglink <<
-          ", "<< article_id+"-"+ mediaid +".jpeg" <<
-          ", "<< subjects <<
-          ", "<< publishdate <<
-          ", "<<"Länge leve Kosta! exhibition" <<
-          ", "<<"Kulturparken Småland / Smålands museum" <<
-          ", "<< exif_model <<
-          ", "<< exif_iso <<
-          ", "<< exif_focallength <<
-          ", "<< exif_exposuretime <<
-          ", "<< exif_aperture <<
-          ", "<< exif_datetimeoriginal<<
-          ", "<< license <<
-          std::endl;
         }
         }
       }
