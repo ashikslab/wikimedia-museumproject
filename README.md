@@ -1,14 +1,18 @@
+How to build?
+-------------
+
 Dependencies: curlpp, rapidjson
 
 To build please do:
 
-mkdir build
-cd build
-cmake ..
-make
+mkdir build  
+cd build  
+cmake ..  
+make  
 
 How to use?
 -----------
+
 1. First run the fetch_all binary with your api key as argument.
   It will fetch the json data into your local folder.
 
@@ -16,7 +20,7 @@ How to use?
   download all the images).
 
 3. Run the "genexifall" script- Supply the folder name
-  containing the dwnloaded images as parameter.
+  containing the downloaded images as parameter.
 
 4. Run parser again without any arguments.
    You should get the out.csv file generated at this step
