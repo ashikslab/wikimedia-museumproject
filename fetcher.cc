@@ -13,13 +13,13 @@
 
 int main(int argc, char *argv[])
 {
-  if (argc !=2 ) {
-    std::cout<<"Please run as "<<argv[0] <<" <api key>"<<std::endl;
+  if (argc !=3 ) {
+    std::cout<<"Please run as "<<argv[0] <<" <exhibition id> <api key>"<<std::endl;
     exit(0);
   }
   char url[256], outfilename[64];
   for (int i = 0; i<4; i++) {
-    snprintf(url, sizeof url, "https://api.dimu.org/api/solr/select?q=Kosta&wt=json&fq=(artifact.exhibitionUids:\"336485B3-1E4E-443C-8800-F93BDD12520A\")&start=%d&rows=100&api.key=%s", i*100, argv[1]);
+    snprintf(url, sizeof url, "https://api.dimu.org/api/solr/select?q=Kosta&wt=json&fq=(artifact.exhibitionUids:\"%s\")&start=%d&rows=100&api.key=%s", argv[1], i*100,  argv[2]);
     snprintf(outfilename, sizeof outfilename, "data_%d.json", i);
    
    /*if (DEBUG_LEVEL > 0) */std::cout<<"url to fetch is "<<std::endl<<url<<std::endl;
