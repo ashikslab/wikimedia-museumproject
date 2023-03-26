@@ -17,12 +17,13 @@
 int main(int argc, char *argv[])
 {
   std::string exbid, apikey;
-  if (argc !=5 ) {
-    std::cout<<"Usage: "<<argv[0] <<" -e <exhibition id> -k <api key>"<<std::endl;
+  if (argc !=7 ) {
+    std::cout<<"Usage: "<<argv[0] <<" -e <exhibition id> -k <api key> -e <number of records>"<<std::endl;
     exit(0);
   }
   int c;
-  while ((c = getopt (argc, argv, "e:k:")) != -1)
+  int numrec = 0;
+  while ((c = getopt (argc, argv, "e:k:n:")) != -1)
     switch(c)
       {
       case 'e':
@@ -31,11 +32,16 @@ int main(int argc, char *argv[])
       case 'k':
 	apikey = optarg;
 	break;
+      case 'n':
+	numrec = atoi(optarg);
+	break;
       default:
 	break;
       }
+  std::cout<<numrec<<" records to fetch\n";
+  int numfetches = (numrec / 100) + 1;
   char url[256], outfilename[64];
-  for (int i = 0; i<4; i++) {
+  for (int i = 0; i<numfetches; i++) {
     snprintf(url, sizeof url, "https://api.dimu.org/api/solr/select?q=Kosta&wt=json&fq=(artifact.exhibitionUids:\"%s\")&start=%d&rows=100&api.key=%s", exbid.c_str(), i*100,  apikey.c_str());
 
     std::cout<<url<<"\n";
