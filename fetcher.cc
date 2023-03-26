@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 {
   std::string exbid, apikey;
   if (argc !=5 ) {
-    std::cout<<"Please run as "<<argv[0] <<" <exhibition id> <api key>"<<std::endl;
+    std::cout<<"Usage: "<<argv[0] <<" -e <exhibition id> -k <api key>"<<std::endl;
     exit(0);
   }
   int c;
