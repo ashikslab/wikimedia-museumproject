@@ -42,14 +42,19 @@ int main(int argc, char *argv[])
   int numfetches = (numrec / 100) + 1;
   char url[256], outfilename[64];
   for (int i = 0; i<numfetches; i++) {
-    snprintf(url, sizeof url, "https://api.dimu.org/api/solr/select?q=Kosta&wt=json&fq=(artifact.exhibitionUids:\"%s\")&start=%d&rows=100&api.key=%s", exbid.c_str(), i*100,  apikey.c_str());
+    snprintf(
+      url,
+      sizeof url,
+      "https://api.dimu.org/api/solr/select?q=Kosta&wt=json&fq=(artifact.exhibitionUids:\"%s\")&start=%d&rows=100&api.key=%s", exbid.c_str(), i*100,  apikey.c_str());
 
     std::cout<<url<<"\n";
 
     snprintf(outfilename, sizeof outfilename, "data_%d.json", i);
    
-   /*if (DEBUG_LEVEL > 0) */std::cout<<"url to fetch is "<<std::endl<<url<<std::endl;
-   std::cout<<"writing output to "<<outfilename<<std::endl;
+   if (DEBUG_LEVEL > 0) {
+    std::cout<<"url to fetch is "<<std::endl<<url<<std::endl;
+    std::cout<<"writing output to "<<outfilename<<std::endl;
+   }
   
   try {
     curlpp::Cleanup cleaner;
