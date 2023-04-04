@@ -26,7 +26,7 @@ int main(int argc, char **argv)
       case 'd': // download mode
         download_mode = true;
         break;
-      case 'n': // number of records
+      case 'n': // number of files to process
         numfiles = atoi(optarg);
         break;
       default:
