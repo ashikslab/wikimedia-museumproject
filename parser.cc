@@ -1,6 +1,9 @@
 #include <rapidjson/document.h>
 #include <rapidjson/filereadstream.h>
 
+#include <unistd.h>
+#include <cstdlib>
+
 #include <algorithm>
 #include <cstdio>
 #include <fstream>
@@ -14,17 +17,28 @@ std::string yearstr(int year) {
 
 int main(int argc, char **argv)
 {
+  int c;
   bool download_mode =false;
-  if (argc == 2) {
-    std::string arg1 = argv[1];
-    download_mode = arg1=="--download";
-  }
+  int numfiles = 0;
+  while ((c = getopt (argc, argv, "d:n:")) != -1)
+    switch(c)
+      {
+      case 'd': // download mode
+        download_mode = true;
+        break;
+      case 'n': // number of records
+        numfiles = atoi(optarg);
+        break;
+      default:
+        break;
+      } 
+
   char filename[64];
   snprintf(filename, sizeof filename, "out.csv");
   std::ofstream out_file1;
   out_file1.open(filename);
   out_file1<<"id, Caption/title, production start year, end year, Description, Item url, Image Source, image_filename, subjects, date published, collection name, museum name, exif_model, exif_iso, exif_focallength, exif_exposuretime, exif_aperture,  exif_datetimeoriginal, liceses\n";
-  for (auto i = 0; i<4; i++) {
+  for (auto i = 0; i<numfiles; i++) {
     char in_file_i[64];
     snprintf(in_file_i, sizeof in_file_i, "data_%d.json", i);
     // Open the file
