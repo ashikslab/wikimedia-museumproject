@@ -17,7 +17,7 @@ with open(sys.argv[1], "r") as file:
             # summarize the text in the 5th column using OpenAi's GPT-3
             # create a variable called prompt and set it as the concatenatenation of the string "Summarize this
             # in one sentence:" and the text in the 5th column
-            prompt = "Summarize this in one English sentence of not more than 4 words:" + row[4]
+            prompt = "Summarize the following description of a museum item in one English phrase of strictly less than 5 words:" + row[4]
 
             completion = openai.ChatCompletion.create( # 1. Change the function Completion to ChatCompletion
                 model = 'gpt-3.5-turbo',
