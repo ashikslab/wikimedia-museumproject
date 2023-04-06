@@ -19,20 +19,19 @@ with open(sys.argv[1], "r") as file:
             # in one sentence:" and the text in the 5th column
             prompt = "Summarize this in one English sentence of not more than 4 words:" + row[4]
 
-            response = openai.Completion.create(
-                model="gpt-3.5-turbo",
-                prompt=prompt,
-                temperature=0.7,
-                max_tokens=64,
-                top_p=1.0,
-                frequency_penalty=0.0,
-                presence_penalty=0.0
+            completion = openai.ChatCompletion.create( # 1. Change the function Completion to ChatCompletion
+                model = 'gpt-3.5-turbo',
+                messages = [
+                    {'role': 'user', 'content': prompt}
+                ],
+                temperature = 0  
             )
+
             # write the response as the last column in each row of the same csv file
-            row.append(response)
+            row.append(completion['choices'][0]['message']['content'])
             print(row)
             # write the row to the csv file
 
             writer.writerow(row)
-            outfile.close()
-            file.close()
+        outfile.close()
+        file.close()
